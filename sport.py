@@ -1,54 +1,3 @@
-# import requests
-# from datetime import datetime, timedelta
-
-# # Get tomorrow's date in YYYY-MM-DD format
-# tomorrow = (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%d")
-
-# # Define the sports you want to fetch
-# sports = ["football", "basketball", "tennis"]
-# matches = []
-
-# try:
-#     for sport in sports:
-#         # Construct the URL dynamically for the current sport
-#         sport_url = f"https://api.sofascore.com/api/v1/sport/{sport}/scheduled-events/{tomorrow}"
-#         # Make the API request
-#         response = requests.get(sport_url)
-#         # Check if the response is successful
-#         response.raise_for_status()
-#         # Parse the JSON response
-#         data = response.json()
-#         # Extract the events from the response
-#         events = data.get("events", [])
-
-#         if events:
-#             match = events[5]  # Only get the first match per sport
-#             start_time = match.get("startTimestamp")
-#             match_obj = {
-#                 "match_date": datetime.utcfromtimestamp(start_time).strftime("%Y-%m-%d %H:%M"),
-#                 "home_team": match.get("homeTeam", {}).get("name", "Unknown"),
-#                 "away_team": match.get("awayTeam", {}).get("name", "Unknown"),
-#                 "country": match.get("tournament", {}).get("category", {}).get("country", {}).get("name", "Unknown"),
-#                 "league": match.get("tournament", {}).get("name", "Unknown"),
-#                 "sport": match.get("tournament", {}).get("category", {}).get("sport", {}).get("name", "Unknown"),
-#             }
-#             matches.append(match_obj)
-# except Exception as e:
-#     print(f"Error fetching matches: {e}")
-
-# try:
-#     response = requests.post(
-#     "http://localhost:8000/match/create",
-#     json=matches  # ✅ this is the correct parameter
-# )
-#     # Check if the response is successful
-#     if response.status_code == 200:
-#         print(f"✅ Matches sent")
-#     else:
-#         print(f"❌ Failed to send matches: {response.text}")
-# except Exception as e:
-#     print(f"❌ Error sending match to API: {e}")
-
 import requests
 from datetime import datetime, timedelta
 import time
@@ -118,10 +67,14 @@ try:
                     start_time = match.get("startTimestamp")
                     if start_time:
                         match_date = datetime.utcfromtimestamp(start_time)
+                        home_team_id = match.get("homeTeam", {}).get("id")
+                        away_team_id = match.get("awayTeam", {}).get("id")
                         match_obj = {
                             "match_date": match_date.strftime("%Y-%m-%d %H:%M"),
                             "home_team": match.get("homeTeam", {}).get("name", "Unknown"),
+                            "home_team_image": f"https://api.sofascore.com/api/v1/team/{home_team_id}/image",
                             "away_team": match.get("awayTeam", {}).get("name", "Unknown"),
+                            "away_team_image": f"https://api.sofascore.com/api/v1/team/{away_team_id}/image",
                             "country": match.get("tournament", {}).get("category", {}).get("country", {}).get("name", "Unknown"),
                             "league": match.get("tournament", {}).get("name", "Unknown"),
                             "sport": match.get("tournament", {}).get("category", {}).get("sport", {}).get("name", "Unknown"),
@@ -149,7 +102,8 @@ try:
     if matches:
         logger.info(f"Sending {len(matches)} matches to the local API...")
         response = requests.post(
-            "https://telegram-bot-2h7q.onrender.com/match/create",
+            # "https://telegram-bot-2h7q.onrender.com/match/create",
+            "http://localhost:8000/match/create",
             json=matches
         )
         
